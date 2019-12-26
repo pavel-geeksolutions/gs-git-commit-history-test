@@ -1,13 +1,14 @@
 import { Component, OnInit, OnDestroy, EventEmitter } from '@angular/core';
 import { concat, Observable, of, Subject } from 'rxjs';
-import { GithubRepo, GithubUser } from '../interfaces';
+import { GithubCommit, GithubRepo, GithubUser } from '../interfaces';
 import { GithubService } from '../services/github.service';
 import {
   catchError,
   debounceTime,
   distinctUntilChanged,
   switchMap,
-  tap
+  tap,
+  map
 } from 'rxjs/operators';
 
 const USER_INPUT_DEBOUNCE = 300; // ms
@@ -22,10 +23,13 @@ export class GitHistoryComponent implements OnInit, OnDestroy {
   user: GithubUser;
   repos$: Observable<GithubRepo[]>;
   repo: GithubRepo;
+  commits$: Observable<GithubCommit[]>;
   usersLoading = false;
   reposLoading = false;
+  commitsLoading = false;
   usersInput$ = new Subject<string>();
   userSelected$ = new EventEmitter<string>();
+  repoSelected$ = new EventEmitter<[string, string]>();
 
   constructor(private gitService: GithubService) {
   }
@@ -58,10 +62,28 @@ export class GitHistoryComponent implements OnInit, OnDestroy {
         ))
       )
     );
+    this.commits$ = concat(
+      of([]), // default items
+      this.repoSelected$.pipe(
+        distinctUntilChanged(),
+        tap(() => this.commitsLoading = true),
+        switchMap(([userLogin, repoName]) => this.gitService.getCommits(userLogin, repoName).pipe(
+          map(commitsResponse => {
+            return commitsResponse.records;
+          }),
+          catchError(() => of([])), // empty list on error
+          tap(() => this.commitsLoading = false)
+        ))
+      )
+    );
   }
 
   onUserSelected(user: GithubUser) {
-    this.userSelected$.emit(user ? user.login : '');
+    this.userSelected$.emit(user && user.login);
+  }
+
+  onRepoSelected(repo: GithubRepo) {
+    this.repoSelected$.emit([this.user.login, repo && repo.name]);
   }
 
   ngOnDestroy(): void {

@@ -6,7 +6,7 @@
   </div>
   <div class="row">
     <div class="col-6 m-auto">
-      <label>Find Github User</label>
+      <label><b>1.</b> Find Github User</label>
       <ng-select [items]="users$ | async"
                  bindLabel="login"
                  [hideSelected]="true"
@@ -16,15 +16,46 @@
                  [(ngModel)]="user"
                  (change)="onUserSelected($event)">
       </ng-select>
-      <br>
-      <br>
-      <label>Find User's Repos</label>
+    </div>
+  </div>
+  <br>
+  <br>
+  <div class="row" [ngClass]="{disabled: !user}">
+    <div class="col-6 m-auto">
+      <label><b>2.</b> Find User's Repos</label>
       <ng-select [items]="repos$ | async"
                  bindLabel="name"
+                 [disabled]="!user"
                  [hideSelected]="true"
+                 [loading]="reposLoading"
                  [(ngModel)]="repo"
-                 [loading]="reposLoading">
+                 (change)="onRepoSelected($event)">
       </ng-select>
+    </div>
+  </div>
+  <br>
+  <br>
+  <div class="row" [ngClass]="{disabled: !repo}">
+    <div class="col">
+      <label><b>3.</b> Explore Commits</label>
+      <table class="table table-striped">
+        <thead>
+        <tr>
+          <th scope="col">Commit</th>
+          <th scope="col">Author</th>
+          <th scope="col">Message</th>
+          <th scope="col">Date</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let commit of commits$ | async">
+          <td>{{commit.sha}}</td>
+          <td>{{commit.authorName}}</td>
+          <td>{{commit.message}}</td>
+          <td>{{commit.authorDate | date : 'short'}}</td>
+        </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

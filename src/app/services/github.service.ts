@@ -63,10 +63,10 @@ export class GithubService {
     );
   }
 
-  getCommits(userLogin: string, repo: string, page: number = 1,
+  getCommits(userLogin: string, repoName: string, page: number = 1,
              perPage: number = 10): Observable<PageableResponse<GithubCommit>> {
     return this.httpClient.get<any>(
-      `${BASE_URL}/repos/${userLogin}/${repo}/commits?page=${page}&per_page=${perPage}`,
+      `${BASE_URL}/repos/${userLogin}/${repoName}/commits?page=${page}&per_page=${perPage}`,
       {observe: 'response'}).pipe(
       map(response => {
         const commits = response.body.map((item) => {
