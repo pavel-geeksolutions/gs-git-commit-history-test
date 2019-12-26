@@ -18,18 +18,21 @@ const USER_INPUT_DEBOUNCE = 300; // ms
   templateUrl: './git-history.component.html',
   styleUrls: ['./git-history.component.scss']
 })
-export class GitHistoryComponent implements OnInit, OnDestroy {
+export class GitHistoryComponent implements OnInit {
   users$: Observable<GithubUser[]>;
   user: GithubUser;
   repos$: Observable<GithubRepo[]>;
   repo: GithubRepo;
   commits$: Observable<GithubCommit[]>;
+  branches$: Observable<string[]>;
+  branch = 'master';
   usersLoading = false;
   reposLoading = false;
   commitsLoading = false;
   usersInput$ = new Subject<string>();
   userSelected$ = new EventEmitter<string>();
   repoSelected$ = new EventEmitter<[string, string]>();
+  branchSelected$ = new EventEmitter<string>();
   // pagination
   page = 1;
   pageSize = 10;
@@ -68,19 +71,35 @@ export class GitHistoryComponent implements OnInit, OnDestroy {
       )
     );
     this.commits$ = merge(
+      this.userSelected$,
       this.repoSelected$,
+      this.branchSelected$,
       this.pageChanged$
     ).pipe(
       distinctUntilChanged(),
       tap(() => this.commitsLoading = true),
-      switchMap(() => this.gitService.getCommits(this.user.login, this.repo.name, this.page, this.pageSize).pipe(
-        map(commitsResponse => {
-          this.total = commitsResponse.totalRecords;
-          return commitsResponse.records;
-        }),
-        catchError(() => of([])), // empty list on error
-        tap(() => this.commitsLoading = false)
-      ))
+      switchMap(() => {
+        if (!this.user || !this.repo) {
+          this.total = 0;
+          return of([]);
+        }
+        return this.gitService.getCommits(this.user.login, this.repo.name, this.branch, this.page, this.pageSize).pipe(
+          map(commitsResponse => {
+            this.total = commitsResponse.totalRecords;
+            return commitsResponse.records;
+          }),
+          catchError(() => of([])) // empty list on error
+        );
+      }),
+      tap(() => this.commitsLoading = false)
+    );
+    this.branches$ = concat(
+      of([]), // default items
+      this.repoSelected$.pipe(
+        distinctUntilChanged(),
+        switchMap(userLogin => this.gitService.getRepoBranches(this.user.login, this.repo.name)),
+        catchError(() => of([])) // empty list on error
+      )
     );
   }
 
@@ -89,14 +108,17 @@ export class GitHistoryComponent implements OnInit, OnDestroy {
   }
 
   onRepoSelected(repo: GithubRepo) {
+    this.page = 1;
     this.repoSelected$.emit([this.user.login, repo && repo.name]);
+  }
+
+  onBranchSelected(branch: string) {
+    this.page = 1;
+    this.branchSelected$.emit(branch);
   }
 
   onPageChange(page: number) {
     this.pageChanged$.emit(page);
-  }
-
-  ngOnDestroy(): void {
   }
 
 }

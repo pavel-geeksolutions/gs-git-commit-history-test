@@ -18,6 +18,21 @@ export class GithubService {
   constructor(private httpClient: HttpClient) {
   }
 
+  private static parseTotalPagesFromLinkHeader(headers: HttpHeaders): number {
+    const linksHeaderValue = headers.get(LINK_HEADER_NAME);
+    if (!linksHeaderValue) {
+      return 1;
+    }
+
+    const parts: string[] = linksHeaderValue.split(',');
+    const lastItemLink = parts.find(link => link.includes('last'));
+    if (!lastItemLink) {
+      // already last page
+      return 0;
+    }
+    return +lastItemLink.match(/[^_]page=(\d+)/)[1];
+  }
+
   getUsers(term: string): Observable<GithubUser[]> {
     if (!term) {
       return of([]);
@@ -63,10 +78,10 @@ export class GithubService {
     );
   }
 
-  getCommits(userLogin: string, repoName: string, page: number = 1,
+  getCommits(userLogin: string, repoName: string, branch: string = 'master', page: number = 1,
              perPage: number = 10): Observable<PageableResponse<GithubCommit>> {
     return this.httpClient.get<any>(
-      `${BASE_URL}/repos/${userLogin}/${repoName}/commits?page=${page}&per_page=${perPage}`,
+      `${BASE_URL}/repos/${userLogin}/${repoName}/commits?page=${page}&per_page=${perPage}&sha=${branch}`,
       {observe: 'response'}).pipe(
       map(response => {
         const commits = response.body.map((item) => {
@@ -80,7 +95,7 @@ export class GithubService {
             url: item.url
           };
         });
-        const totalPagesCount = this.parseTotalPagesFromLinkHeader(response.headers) || page;
+        const totalPagesCount = GithubService.parseTotalPagesFromLinkHeader(response.headers) || page;
         return {
           records: commits,
           page,
@@ -91,18 +106,12 @@ export class GithubService {
     );
   }
 
-  parseTotalPagesFromLinkHeader(headers: HttpHeaders): number {
-    const linksHeaderValue = headers.get(LINK_HEADER_NAME);
-    if (!linksHeaderValue) {
-      return 1;
-    }
-
-    const parts: string[] = linksHeaderValue.split(',');
-    const lastItemLink = parts.find(link => link.includes('last'));
-    if (!lastItemLink) {
-      // already last page
-      return 0;
-    }
-    return +lastItemLink.match(/[^_]page=(\d+)/)[1];
+  getRepoBranches(userLogin: string, repoName: string): Observable<string[]> {
+    return this.httpClient.get<{ name: string }[]>(
+      `${BASE_URL}/repos/${userLogin}/${repoName}/branches`).pipe(
+      map(responseBody => {
+        return responseBody.map((item) => item.name);
+      })
+    );
   }
 }

@@ -9,7 +9,6 @@
       <label><b>1.</b> Find Github User</label>
       <ng-select [items]="users$ | async"
                  bindLabel="login"
-                 [hideSelected]="true"
                  [minTermLength]="2"
                  [loading]="usersLoading"
                  [typeahead]="usersInput$"
@@ -26,7 +25,6 @@
       <ng-select [items]="repos$ | async"
                  bindLabel="name"
                  [disabled]="!user"
-                 [hideSelected]="true"
                  [loading]="reposLoading"
                  [(ngModel)]="repo"
                  (change)="onRepoSelected($event)">
@@ -37,7 +35,19 @@
   <br>
   <div class="row" [ngClass]="{disabled: !repo}">
     <div class="col">
-      <label><b>3.</b> Explore Commits</label>
+      <div class="row">
+        <div class="col-9">
+          <label><b>3.</b> Explore Commits</label>
+        </div>
+        <div class="col-3 mb-2">
+          <ng-select [items]="branches$ | async"
+                     [disabled]="!repo"
+                     [(ngModel)]="branch"
+                     [clearable]="false"
+                     (change)="onBranchSelected($event)">
+          </ng-select>
+        </div>
+      </div>
       <table class="table table-striped">
         <thead>
         <tr>
