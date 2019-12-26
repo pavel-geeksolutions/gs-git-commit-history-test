@@ -1,1 +1,31 @@
-<h1>GIT HISTORY</h1>
+<div class="container">
+  <div class="row">
+    <div class="col">
+      <h2 class="text-center my-5">SEARCH GIT HISTORY</h2>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-6 m-auto">
+      <label>Find Github User</label>
+      <ng-select [items]="users$ | async"
+                 bindLabel="login"
+                 [hideSelected]="true"
+                 [minTermLength]="2"
+                 [loading]="usersLoading"
+                 [typeahead]="usersInput$"
+                 [(ngModel)]="user"
+                 (change)="onUserSelected($event)">
+      </ng-select>
+      <br>
+      <br>
+      <label>Find User's Repos</label>
+      <ng-select [items]="repos$ | async"
+                 bindLabel="name"
+                 [hideSelected]="true"
+                 [(ngModel)]="repo"
+                 [loading]="reposLoading">
+      </ng-select>
+    </div>
+  </div>
+</div>
+

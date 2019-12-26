@@ -4,6 +4,7 @@ import { GitHistoryComponent } from './git-history.component';
 import { RouterModule, Routes } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
 import { NgSelectModule } from '@ng-select/ng-select';
+import { FormsModule } from '@angular/forms';
 
 const routes: Routes = [
   {
@@ -18,7 +19,8 @@ const routes: Routes = [
     CommonModule,
     NgbModule,
     NgSelectModule,
-    RouterModule.forChild(routes)
+    RouterModule.forChild(routes),
+    FormsModule
   ]
 })
 export class GitHistoryModule {}
