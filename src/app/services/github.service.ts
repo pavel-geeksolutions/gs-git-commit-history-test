@@ -80,7 +80,7 @@ export class GithubService {
             url: item.url
           };
         });
-        const totalPagesCount = this.parseTotalPagesFromLinkHeader(response.headers);
+        const totalPagesCount = this.parseTotalPagesFromLinkHeader(response.headers) || page;
         return {
           records: commits,
           page,
@@ -98,6 +98,11 @@ export class GithubService {
     }
 
     const parts: string[] = linksHeaderValue.split(',');
-    return +parts.find(link => link.includes('last')).match(/[^_]page=(\d+)/)[1];
+    const lastItemLink = parts.find(link => link.includes('last'));
+    if (!lastItemLink) {
+      // already last page
+      return 0;
+    }
+    return +lastItemLink.match(/[^_]page=(\d+)/)[1];
   }
 }

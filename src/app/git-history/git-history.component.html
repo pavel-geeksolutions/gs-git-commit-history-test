@@ -56,6 +56,13 @@
         </tr>
         </tbody>
       </table>
+      <ngb-pagination
+        [(page)]="page"
+        [pageSize]="pageSize"
+        [collectionSize]="total"
+        [maxSize]="5"
+        [boundaryLinks]="true"
+        (pageChange)="onPageChange($event)"></ngb-pagination>
     </div>
   </div>
 </div>

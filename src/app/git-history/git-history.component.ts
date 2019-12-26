@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, EventEmitter } from '@angular/core';
-import { concat, Observable, of, Subject } from 'rxjs';
+import { concat, Observable, of, Subject, merge } from 'rxjs';
 import { GithubCommit, GithubRepo, GithubUser } from '../interfaces';
 import { GithubService } from '../services/github.service';
 import {
@@ -30,6 +30,11 @@ export class GitHistoryComponent implements OnInit, OnDestroy {
   usersInput$ = new Subject<string>();
   userSelected$ = new EventEmitter<string>();
   repoSelected$ = new EventEmitter<[string, string]>();
+  // pagination
+  page = 1;
+  pageSize = 10;
+  total = 0;
+  pageChanged$ = new EventEmitter<number>();
 
   constructor(private gitService: GithubService) {
   }
@@ -62,19 +67,20 @@ export class GitHistoryComponent implements OnInit, OnDestroy {
         ))
       )
     );
-    this.commits$ = concat(
-      of([]), // default items
-      this.repoSelected$.pipe(
-        distinctUntilChanged(),
-        tap(() => this.commitsLoading = true),
-        switchMap(([userLogin, repoName]) => this.gitService.getCommits(userLogin, repoName).pipe(
-          map(commitsResponse => {
-            return commitsResponse.records;
-          }),
-          catchError(() => of([])), // empty list on error
-          tap(() => this.commitsLoading = false)
-        ))
-      )
+    this.commits$ = merge(
+      this.repoSelected$,
+      this.pageChanged$
+    ).pipe(
+      distinctUntilChanged(),
+      tap(() => this.commitsLoading = true),
+      switchMap(() => this.gitService.getCommits(this.user.login, this.repo.name, this.page, this.pageSize).pipe(
+        map(commitsResponse => {
+          this.total = commitsResponse.totalRecords;
+          return commitsResponse.records;
+        }),
+        catchError(() => of([])), // empty list on error
+        tap(() => this.commitsLoading = false)
+      ))
     );
   }
 
@@ -84,6 +90,10 @@ export class GitHistoryComponent implements OnInit, OnDestroy {
 
   onRepoSelected(repo: GithubRepo) {
     this.repoSelected$.emit([this.user.login, repo && repo.name]);
+  }
+
+  onPageChange(page: number) {
+    this.pageChanged$.emit(page);
   }
 
   ngOnDestroy(): void {
