@@ -1,13 +1,14 @@
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs';
-import { GithubUser } from '../interfaces/github-user';
+import { Observable, of } from 'rxjs';
+import { GithubUser } from '../interfaces';
 import { map } from 'rxjs/operators';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { GithubRepo } from '../interfaces/github-repo';
-import { GithubCommit } from '../interfaces/github-commit';
-import { PageableResponse } from '../interfaces/pageable-response';
+import { GithubRepo } from '../interfaces';
+import { GithubCommit } from '../interfaces';
+import { PageableResponse } from '../interfaces';
 
 const BASE_URL = 'https://api.github.com';
+const LINK_HEADER_NAME = 'Link';
 
 @Injectable({
   providedIn: 'root'
@@ -18,6 +19,9 @@ export class GithubService {
   }
 
   getUsers(term: string): Observable<GithubUser[]> {
+    if (!term) {
+      return of([]);
+    }
     return this.httpClient.get<any>(`${BASE_URL}/search/users?q=${term}`).pipe(
       map(responseBody => {
         return responseBody.items.map((item) => {
@@ -31,6 +35,9 @@ export class GithubService {
   }
 
   getRepos(userLogin: string): Observable<GithubRepo[]> {
+    if (!userLogin) {
+      return of([]);
+    }
     return this.httpClient.get<any>(
       `${BASE_URL}/users/${userLogin}/repos`).pipe(
       map(responseBody => {
@@ -62,7 +69,7 @@ export class GithubService {
       `${BASE_URL}/repos/${userLogin}/${repo}/commits?page=${page}&per_page=${perPage}`,
       {observe: 'response'}).pipe(
       map(response => {
-        let commits = response.body.map((item) => {
+        const commits = response.body.map((item) => {
           return {
             sha: item.sha,
             message: item.commit.message,
@@ -73,24 +80,24 @@ export class GithubService {
             url: item.url
           };
         });
+        const totalPagesCount = this.parseTotalPagesFromLinkHeader(response.headers);
         return {
           records: commits,
           page,
           perPage,
-          totalRecords: this.parseLinkHeader(response.headers) * perPage
+          totalRecords: totalPagesCount * perPage
         };
       })
     );
   }
 
-  parseLinkHeader(headers: HttpHeaders): number {
-    let linksHeaderValue = headers.get('Link');
+  parseTotalPagesFromLinkHeader(headers: HttpHeaders): number {
+    const linksHeaderValue = headers.get(LINK_HEADER_NAME);
     if (!linksHeaderValue) {
       return 1;
     }
 
     const parts: string[] = linksHeaderValue.split(',');
-    return +parts.find(link => link.includes('last')).
-      match(/[^_]page=(\d+)/)[1];
+    return +parts.find(link => link.includes('last')).match(/[^_]page=(\d+)/)[1];
   }
 }
