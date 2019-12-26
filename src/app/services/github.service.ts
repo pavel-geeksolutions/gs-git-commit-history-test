@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { GithubUser } from './github-user';
+import { GithubUser } from '../interfaces/github-user';
 import { map } from 'rxjs/operators';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { GithubRepo } from './github-repo';
-import { GithubCommit } from './github-commit';
-import { PageableResponse } from './pageable-response';
+import { GithubRepo } from '../interfaces/github-repo';
+import { GithubCommit } from '../interfaces/github-commit';
+import { PageableResponse } from '../interfaces/pageable-response';
 
 const BASE_URL = 'https://api.github.com';
 
