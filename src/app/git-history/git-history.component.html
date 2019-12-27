@@ -51,16 +51,16 @@
       <table class="table table-striped">
         <thead>
         <tr>
-          <th scope="col">Commit</th>
           <th scope="col">Author</th>
+          <th scope="col">Commit</th>
           <th scope="col">Message</th>
           <th scope="col">Date</th>
         </tr>
         </thead>
         <tbody>
         <tr *ngFor="let commit of commits$ | async">
+          <td><img [src]="commit.authorImgUrl" [alt]="commit.authorName" class="user-avatar-img">{{commit.authorName}}</td>
           <td>{{commit.sha}}</td>
-          <td>{{commit.authorName}}</td>
           <td>{{commit.message}}</td>
           <td>{{commit.authorDate | date : 'short'}}</td>
         </tr>

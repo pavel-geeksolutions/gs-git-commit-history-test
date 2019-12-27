@@ -92,6 +92,7 @@ export class GithubService {
             authorName: item.commit.author.name,
             authorEmail: item.commit.author.email,
             authorDate: new Date(item.commit.author.date),
+            authorImgUrl: item.author.avatar_url,
             url: item.url
           };
         });
